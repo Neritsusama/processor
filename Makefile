@@ -12,7 +12,7 @@ CXXFLAGS = -Wall -Wextra -Wpedantic -std=c++23
 EXEC = processor
 
 # Script de test
-TEST_SCRIPT = tests1.py
+TEST_SCRIPT = tests2.py
 
 # Règle principale : création de l'exécutable
 $(EXEC): processor.o main.o

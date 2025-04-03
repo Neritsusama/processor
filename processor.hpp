@@ -3,7 +3,7 @@
 
 #include <cstdint>  // Inclusion des types entiers avec taille fixe
 #include <string>   // Inclusion de la gestion des chaînes de caractères
-
+#include <vector>   // Pour std::vector
 
 // Définition de la classe Processor
 class Processor {
@@ -45,6 +45,26 @@ public:
      *     program_path (std::string) : Chemin du fichier programme à exécuter.
      */
     void exec(const std::string& program_path);
+
+    /**
+     * Analyse une instruction et retourne ses composants sous forme de vecteur de strings.
+     *
+     * Args:
+     *     instr (std::string) : Instruction à analyser.
+     * Return:
+     *     std::vector<std::string> : Vecteur contenant les tokens de l'instruction.
+     */
+    std::vector<std::string> parse_instruction(const std::string& instr);
+
+    /**
+     * Vérifie si un nom de registre est valide (a, b, c ou d).
+     *
+     * Args:
+     *     reg (std::string) : Nom du registre à vérifier.
+     * Return:
+     *     bool : True si le registre est valide, false sinon.
+     */
+    bool is_valid_register(const std::string& reg);
 };
 
 #endif // PROCESSOR_HPP

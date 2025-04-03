@@ -1,71 +1,87 @@
-#include "processor.hpp"  // Inclut le fichier d'en-tête de la classe Processor
-#include <iostream>       // Inclut la bibliothèque pour les entrées/sorties standard
-#include <fstream>        // Inclut la bibliothèque pour la manipulation de fichiers
-#include <algorithm>      // Inclut la bibliothèque pour les fonctions utilitaires comme std::min et std::max
+#include "processor.hpp"
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <sstream>
 
-// Fonction pour saturer une valeur entre 0 et 65535
 uint16_t Processor::saturate(int32_t value) {
-    if (value < 0) {
-        return 0;  // Si la valeur est négative, retourne 0
-    } else if (value > 65535) {
-        return 65535;  // Si la valeur dépasse 65535, retourne 65535
-    }
-    return static_cast<uint16_t>(value);  // Sinon, retourne la valeur castée en uint16_t
+    if (value < 0) return 0;
+    if (value > 65535) return 65535;
+    return static_cast<uint16_t>(value);
 }
 
-// Fonction pour extraire l'opcode d'une instruction
-std::string Processor::parse_opcode(const std::string& instr) {
-    size_t space = instr.find(' ');  // Trouve la position de l'espace dans la ligne
-    if (space == std::string::npos) {
-        return instr;  // Si aucun espace n'est trouvé, retourne toute la ligne comme opcode
+std::vector<std::string> Processor::parse_instruction(const std::string& instr) {
+    std::vector<std::string> tokens;
+    std::istringstream iss(instr);
+    std::string token;
+    
+    while (iss >> token) {
+        tokens.push_back(token);
     }
-    return instr.substr(0, space);  // Retourne la sous-chaîne avant l'espace (l'opcode)
+    
+    return tokens;
 }
 
-// Fonction pour extraire l'opérande d'une instruction
-uint16_t Processor::parse_operand(const std::string& instr) {
-    size_t space = instr.find(' ');  // Trouve la position de l'espace dans la ligne
-    if (space == std::string::npos) {
-        return 0;  // Si aucun espace n'est trouvé, retourne 0 comme opérande
-    }
-    return static_cast<uint16_t>(std::stoul(instr.substr(space + 1)));  // Convertit la sous-chaîne après l'espace en uint16_t
+bool Processor::is_valid_register(const std::string& reg) {
+    return (reg == "a" || reg == "b" || reg == "c" || reg == "d");
 }
 
-// Fonction pour exécuter un programme à partir d'un fichier
 void Processor::exec(const std::string& program_path) {
-    std::ifstream file(program_path);  // Ouvre le fichier contenant le programme
-    std::string line;  // Variable pour stocker chaque ligne du fichier
-    uint16_t registre = 0;  // Registre de travail, initialisé à 0
-    bool skip_next = false;  // Indicateur pour sauter la prochaine ligne
+    std::ifstream file(program_path);
+    std::string line;
+    uint16_t registers[4] = {0}; // a=0, b=1, c=2, d=3
+    bool skip_next = false;
 
-    // Boucle pour lire chaque ligne du fichier
     while (std::getline(file, line)) {
         if (skip_next) {
-            skip_next = false;  // Réinitialise l'indicateur après avoir sauté une ligne
-            continue;  // Passe à la prochaine itération de la boucle
+            skip_next = false;
+            continue;
         }
 
-        // Extraire l'opcode de la ligne
-        std::string opcode = parse_opcode(line);
-        // Extraire l'opérande de la ligne (s'il y en a un)
-        uint16_t operand = parse_operand(line);
+        std::vector<std::string> tokens = parse_instruction(line);
+        if (tokens.empty()) continue;
 
-        // Exécuter l'instruction en fonction de l'opcode
-        if (opcode == "SET") {
-            registre = saturate(operand);  // Définir le registre à la valeur de l'opérande
-        } else if (opcode == "ADD") {
-            // Ajouter l'opérande au registre et appliquer la saturation
-            registre = saturate(static_cast<int32_t>(registre) + static_cast<int32_t>(operand));
-        } else if (opcode == "SUB") {
-            // Soustraire l'opérande du registre et appliquer la saturation
-            registre = saturate(static_cast<int32_t>(registre) - static_cast<int32_t>(operand));
-        } else if (opcode == "PRINT") {
-            // Afficher la valeur actuelle du registre
-            std::cout << registre << std::endl;
-        } else if (opcode == "IFNZ") {
-            // Si le registre est égal à 0, sauter la prochaine ligne
-            if (registre == 0) {
-                skip_next = true;  // Activer l'indicateur pour sauter la prochaine ligne
+        std::string opcode = tokens[0];
+
+        if (opcode == "SET" && tokens.size() >= 3) {
+            std::string reg = tokens[1];
+            if (!is_valid_register(reg)) continue;
+            
+            uint16_t value = static_cast<uint16_t>(std::stoul(tokens[2]));
+            int reg_index = reg[0] - 'a';
+            registers[reg_index] = saturate(value);
+        } 
+        else if (opcode == "ADD" && tokens.size() >= 3) {
+            std::string reg = tokens[1];
+            if (!is_valid_register(reg)) continue;
+            
+            uint16_t value = static_cast<uint16_t>(std::stoul(tokens[2]));
+            int reg_index = reg[0] - 'a';
+            registers[reg_index] = saturate(static_cast<int32_t>(registers[reg_index]) + static_cast<int32_t>(value));
+        } 
+        else if (opcode == "SUB" && tokens.size() >= 3) {
+            std::string reg = tokens[1];
+            if (!is_valid_register(reg)) continue;
+            
+            uint16_t value = static_cast<uint16_t>(std::stoul(tokens[2]));
+            int reg_index = reg[0] - 'a';
+            registers[reg_index] = saturate(static_cast<int32_t>(registers[reg_index]) - static_cast<int32_t>(value));
+        } 
+        else if (opcode == "PRINT" && tokens.size() >= 2) {
+            std::string reg = tokens[1];
+            if (!is_valid_register(reg)) continue;
+            
+            int reg_index = reg[0] - 'a';
+            std::cout <<  registers[reg_index] <<  std::endl; // Modification ici
+        } 
+        else if (opcode == "IFNZ" && tokens.size() >= 2) {
+            std::string reg = tokens[1];
+            if (!is_valid_register(reg)) continue;
+            
+            int reg_index = reg[0] - 'a';
+            if (registers[reg_index] == 0) {
+                skip_next = true;
             }
         }
     }
