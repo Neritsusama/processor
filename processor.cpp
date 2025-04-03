@@ -1,9 +1,9 @@
 #include "processor.hpp"
 #include <iostream>
 #include <fstream>
-#include <algorithm>
 #include <vector>
 #include <sstream>
+#include <algorithm>
 
 uint16_t Processor::saturate(int32_t value) {
     if (value < 0) return 0;
@@ -53,27 +53,53 @@ void Processor::exec(const std::string& program_path) {
             registers[reg_index] = saturate(value);
         } 
         else if (opcode == "ADD" && tokens.size() >= 3) {
-            std::string reg = tokens[1];
-            if (!is_valid_register(reg)) continue;
+            std::string reg_dest = tokens[1];
+            if (!is_valid_register(reg_dest)) continue;
             
-            uint16_t value = static_cast<uint16_t>(std::stoul(tokens[2]));
-            int reg_index = reg[0] - 'a';
-            registers[reg_index] = saturate(static_cast<int32_t>(registers[reg_index]) + static_cast<int32_t>(value));
+            int reg_dest_index = reg_dest[0] - 'a';
+            
+            if (is_valid_register(tokens[2])) {
+                std::string reg_src = tokens[2];
+                int reg_src_index = reg_src[0] - 'a';
+                registers[reg_dest_index] = saturate(
+                    static_cast<int32_t>(registers[reg_dest_index]) + 
+                    static_cast<int32_t>(registers[reg_src_index])
+                );
+            } else {
+                uint16_t value = static_cast<uint16_t>(std::stoul(tokens[2]));
+                registers[reg_dest_index] = saturate(
+                    static_cast<int32_t>(registers[reg_dest_index]) + 
+                    static_cast<int32_t>(value)
+                );
+            }
         } 
         else if (opcode == "SUB" && tokens.size() >= 3) {
-            std::string reg = tokens[1];
-            if (!is_valid_register(reg)) continue;
+            std::string reg_dest = tokens[1];
+            if (!is_valid_register(reg_dest)) continue;
             
-            uint16_t value = static_cast<uint16_t>(std::stoul(tokens[2]));
-            int reg_index = reg[0] - 'a';
-            registers[reg_index] = saturate(static_cast<int32_t>(registers[reg_index]) - static_cast<int32_t>(value));
+            int reg_dest_index = reg_dest[0] - 'a';
+            
+            if (is_valid_register(tokens[2])) {
+                std::string reg_src = tokens[2];
+                int reg_src_index = reg_src[0] - 'a';
+                registers[reg_dest_index] = saturate(
+                    static_cast<int32_t>(registers[reg_dest_index]) - 
+                    static_cast<int32_t>(registers[reg_src_index])
+                );
+            } else {
+                uint16_t value = static_cast<uint16_t>(std::stoul(tokens[2]));
+                registers[reg_dest_index] = saturate(
+                    static_cast<int32_t>(registers[reg_dest_index]) - 
+                    static_cast<int32_t>(value)
+                );
+            }
         } 
         else if (opcode == "PRINT" && tokens.size() >= 2) {
             std::string reg = tokens[1];
             if (!is_valid_register(reg)) continue;
             
             int reg_index = reg[0] - 'a';
-            std::cout <<  registers[reg_index] <<  std::endl; // Modification ici
+            std::cout <<  registers[reg_index] <<  std::endl;
         } 
         else if (opcode == "IFNZ" && tokens.size() >= 2) {
             std::string reg = tokens[1];
