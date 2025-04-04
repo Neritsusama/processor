@@ -1,11 +1,7 @@
 # Définition du compilateur C++
 CXX = g++
 
-# Options de compilation :
-# -Wall      : Active les avertissements classiques.
-# -Wextra    : Active des avertissements supplémentaires.
-# -Wpedantic : Renforce le respect du standard C++.
-# -std=c++23 : Utilisation du standard C++23.
+# Options de compilation
 CXXFLAGS = -Wall -Wextra -Wpedantic -std=c++23
 
 # Nom de l'exécutable final
@@ -14,22 +10,29 @@ EXEC = processor
 # Script de test
 TEST_SCRIPT = tests2.py
 
-# Règle principale : création de l'exécutable
-$(EXEC): processor.o main.o
-	$(CXX) $(CXXFLAGS) -o $(EXEC) processor.o main.o  # Ajout des fichiers objets
+# Fichiers objets à générer
+OBJS = processor.o main.o memory.o  # Ajout de memory.o
 
-# Compilation du fichier processor.cpp en fichier objet
-processor.o: processor.cpp processor.hpp
+# Règle principale : création de l'exécutable
+$(EXEC): $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $(EXEC) $(OBJS)  # Lien avec tous les .o
+
+# Compilation de processor.cpp
+processor.o: processor.cpp processor.hpp memory.hpp
 	$(CXX) $(CXXFLAGS) -c processor.cpp -o processor.o
 
-# Compilation du fichier main.cpp en fichier objet
+# Compilation de main.cpp
 main.o: main.cpp processor.hpp
 	$(CXX) $(CXXFLAGS) -c main.cpp -o main.o
 
-# Exécution des tests
+# Compilation de memory.cpp (NOUVEAU)
+memory.o: memory.cpp memory.hpp
+	$(CXX) $(CXXFLAGS) -c memory.cpp -o memory.o
+
+# Tests
 test: $(EXEC)
 	python3 $(TEST_SCRIPT) ./$(EXEC)
 
-# Nettoyage des fichiers objets et de l'exécutable
+# Nettoyage
 clean:
 	rm -f *.o $(EXEC)

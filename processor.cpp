@@ -1,4 +1,5 @@
 #include "processor.hpp"
+#include "memory.hpp"
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -109,6 +110,40 @@ void Processor::exec(const std::string& program_path) {
             if (registers[reg_index] == 0) {
                 skip_next = true;
             }
+        }
+        else if (opcode == "PUSH" && tokens.size() >= 2) {
+            std::string reg = tokens[1];
+            if (!is_valid_register(reg)) continue;
+            
+            int reg_index = reg[0] - 'a';
+            push(registers[reg_index]);
+        } 
+        else if (opcode == "POP" && tokens.size() >= 2) {
+            std::string reg = tokens[1];
+            if (!is_valid_register(reg)) continue;
+            
+            int reg_index = reg[0] - 'a';
+            registers[reg_index] = pop();
+        }
+        else if (opcode == "STORE" && tokens.size() >= 3) {
+            std::string reg_addr = tokens[1];
+            std::string reg_value = tokens[2];
+            if (!is_valid_register(reg_addr)) continue;
+            if (!is_valid_register(reg_value)) continue;
+            
+            int reg_addr_index = reg_addr[0] - 'a';
+            int reg_value_index = reg_value[0] - 'a';
+            write(static_cast<uint8_t>(registers[reg_addr_index]), registers[reg_value_index]);
+        }
+        else if (opcode == "LOAD" && tokens.size() >= 3) {
+            std::string reg_dest = tokens[1];
+            std::string reg_addr = tokens[2];
+            if (!is_valid_register(reg_dest)) continue;
+            if (!is_valid_register(reg_addr)) continue;
+            
+            int reg_dest_index = reg_dest[0] - 'a';
+            int reg_addr_index = reg_addr[0] - 'a';
+            registers[reg_dest_index] = read(static_cast<uint8_t>(registers[reg_addr_index]));
         }
     }
 }
