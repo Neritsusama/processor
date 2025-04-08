@@ -126,24 +126,38 @@ void Processor::exec(const std::string& program_path) {
             registers[reg_index] = pop();
         }
         else if (opcode == "STORE" && tokens.size() >= 3) {
-            std::string reg_addr = tokens[1];
+            // Première valeur est l'adresse, deuxième valeur est le registre
+            // Format: STORE adresse registre
+            uint8_t address;
+            if (is_valid_register(tokens[1])) {
+                int reg_addr_index = tokens[1][0] - 'a';
+                address = static_cast<uint8_t>(registers[reg_addr_index]);
+            } else {
+                address = static_cast<uint8_t>(std::stoul(tokens[1]));
+            }
+            
             std::string reg_value = tokens[2];
-            if (!is_valid_register(reg_addr)) continue;
             if (!is_valid_register(reg_value)) continue;
             
-            int reg_addr_index = reg_addr[0] - 'a';
             int reg_value_index = reg_value[0] - 'a';
-            write(static_cast<uint8_t>(registers[reg_addr_index]), registers[reg_value_index]);
+            write(address, registers[reg_value_index]);
         }
         else if (opcode == "LOAD" && tokens.size() >= 3) {
-            std::string reg_dest = tokens[1];
-            std::string reg_addr = tokens[2];
+            // Première valeur est l'adresse, deuxième valeur est le registre de destination
+            // Format: LOAD adresse registre
+            uint8_t address;
+            if (is_valid_register(tokens[1])) {
+                int reg_addr_index = tokens[1][0] - 'a';
+                address = static_cast<uint8_t>(registers[reg_addr_index]);
+            } else {
+                address = static_cast<uint8_t>(std::stoul(tokens[1]));
+            }
+            
+            std::string reg_dest = tokens[2];
             if (!is_valid_register(reg_dest)) continue;
-            if (!is_valid_register(reg_addr)) continue;
             
             int reg_dest_index = reg_dest[0] - 'a';
-            int reg_addr_index = reg_addr[0] - 'a';
-            registers[reg_dest_index] = read(static_cast<uint8_t>(registers[reg_addr_index]));
+            registers[reg_dest_index] = read(address);
         }
     }
 }
